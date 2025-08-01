@@ -11,8 +11,8 @@ const app = express();
 // CORS configuration
 const corsOptions = {
   origin: [
-    "https://vin2admin.onrender.com/",
-    "https://vinfrontned.onrender.com/",
+    "https://vin2admin.onrender.com",
+    "https://vinfrontned.onrender.com",
     "https://admin.vin2grow.in",
     "https://front3-f3cj.onrender.com",
     "https://vin2grow-latest-admin.onrender.com",
