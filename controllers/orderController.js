@@ -59,7 +59,7 @@ exports.createOrder = async (req, res) => {
       deliveryDate,
       deliveryTime,
       paymentStatus,
-      amount,
+      amount,   
       currency = "INR",
       receipt,
     } = req.body;
@@ -70,8 +70,6 @@ exports.createOrder = async (req, res) => {
       user: userId,
       items,
       address,
-      deliveryDate,
-      deliveryTime,
       totalAmount: items?.reduce(
         (total, item) => total + item.price * item.quantity,
         0
@@ -126,8 +124,8 @@ PIN: ${order.address.pincode}
       userEmail: populatedOrder.user.email,
       userName: populatedOrder.user.name,
       address: formattedAddress,
-      deliveryDate: order.deliveryDate,
-      deliveryTime: order.deliveryTime,
+      deliveryDate: order.deliveryDate || null,
+      deliveryTime: order.deliveryTime || null,
       paymentStatus: order.paymentStatus,
     };
 
@@ -153,8 +151,8 @@ PIN: ${order.address.pincode}
           _id: order._id,
           items: order.items,
           totalAmount: order.totalAmount,
-          deliveryDate: order.deliveryDate,
-          deliveryTime: order.deliveryTime,
+          deliveryDate: order.deliveryDate || null,
+          deliveryTime: order.deliveryTime || null,
           status: order.status,
         },
         emailStatus: {
@@ -172,8 +170,8 @@ PIN: ${order.address.pincode}
           _id: order._id,
           items: order.items,
           totalAmount: order.totalAmount,
-          deliveryDate: order.deliveryDate,
-          deliveryTime: order.deliveryTime,
+          deliveryDate: order.deliveryDate || null,
+          deliveryTime: order.deliveryTime || null ,
           status: order.status,
         },
         emailStatus: {

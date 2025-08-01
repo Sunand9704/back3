@@ -21,8 +21,6 @@ router.post("/:id/cancel", authenticateToken, orderController.cancelOrder);
 // Admin routes
 router.get(
   "/admin/all",
-  authenticateToken,
-  authorizeRoles("admin"),
   orderController.getAllOrders
 );
 router.get(

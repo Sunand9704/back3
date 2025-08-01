@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../utils/cloudinary");
@@ -34,6 +35,21 @@ exports.createProduct = async (req, res) => {
       offerEndDate,
       isOfferActive,
     } = req.body;
+    console.log(category , "sended");
+    
+    // Validate category exists and is active
+    if (category) {
+      const categoryExists = await Category.findOne({
+        name: category.trim().toLowerCase(),
+        isActive: true,
+      });
+      if (!categoryExists) {
+        return res.status(400).json({
+          error:
+            "Category not found or inactive. Please select a valid category.",
+        });
+      }
+    }
 
     const uploadedImages = [];
 
@@ -90,7 +106,51 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    console.log(req.files);
+    // Validate category if it's being updated
+    if (
+      updateData.category &&
+      updateData.category !== existingProduct.category
+    ) {
+      const categoryExists = await Category.findOne({
+        name: updateData.category.trim(),
+        isActive: true,
+      });
+      if (!categoryExists) {
+        return res.status(400).json({
+          error:
+            "Category not found or inactive. Please select a valid category.",
+        });
+      }
+    }
+
+    // Handle image uploads if any
+    if (req.files && req.files.length > 0) {
+      const uploadedImages = [];
+
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "products",
+        });
+
+        uploadedImages.push({
+          url: result.secure_url,
+          public_id: result.public_id,
+        });
+
+        fs.unlinkSync(file.path); // Delete temp local file
+      }
+
+      // Add new images to existing ones
+      updateData.images = [...existingProduct.images, ...uploadedImages];
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedProduct);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });
