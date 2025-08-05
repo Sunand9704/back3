@@ -4,9 +4,8 @@ require("dotenv").config();
 const Category = require("../models/Category");
 const Product = require("../models/Product");
 
-// Existing categories from the old enum
-const EXISTING_CATEGORIES = [
-  "Shop all",
+// Bamboo products that should be categorized under "Bamboo"
+const BAMBOO_PRODUCTS = [
   "Sanchi Stupa",
   "Warli House",
   "Tiger Crafting",
@@ -24,6 +23,9 @@ const EXISTING_CATEGORIES = [
   "Bamboo Card-Pen Holder",
 ];
 
+// Main categories
+const MAIN_CATEGORIES = ["Shop all", "Bamboo"];
+
 async function migrateCategories() {
   try {
     console.log("Starting category migration...");
@@ -32,16 +34,20 @@ async function migrateCategories() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB");
 
-    // Create categories from existing enum values
-    for (const categoryName of EXISTING_CATEGORIES) {
+    // Step 1: Create main categories
+    console.log("Creating main categories...");
+    for (const categoryName of MAIN_CATEGORIES) {
       const existingCategory = await Category.findOne({ name: categoryName });
 
       if (!existingCategory) {
         const newCategory = new Category({
           name: categoryName,
-          description: `${categoryName} products`,
+          description:
+            categoryName === "Bamboo"
+              ? "Handcrafted bamboo products and traditional artifacts"
+              : `${categoryName} products`,
           isActive: true,
-          sortOrder: EXISTING_CATEGORIES.indexOf(categoryName),
+          sortOrder: MAIN_CATEGORIES.indexOf(categoryName),
         });
 
         await newCategory.save();
@@ -51,23 +57,55 @@ async function migrateCategories() {
       }
     }
 
-    // Get all products and ensure they have valid categories
-    const products = await Product.find({});
-    console.log(`Found ${products.length} products to validate`);
+    // Step 2: Update products to use the "Bamboo" category
+    console.log("Updating products to use 'Bamboo' category...");
+    const bambooCategory = await Category.findOne({ name: "Bamboo" });
 
-    for (const product of products) {
-      if (product.category) {
-        const categoryExists = await Category.findOne({
-          name: product.category,
-        });
-        if (!categoryExists) {
-          console.log(
-            `Product ${product.name} has invalid category: ${product.category}`
-          );
-          // You can choose to set a default category or leave it as is
-          // product.category = "Shop all";
-          // await product.save();
+    if (!bambooCategory) {
+      throw new Error("Bamboo category not found!");
+    }
+
+    let updatedProducts = 0;
+    for (const productName of BAMBOO_PRODUCTS) {
+      const products = await Product.find({ name: productName });
+
+      for (const product of products) {
+        if (product.category !== "Bamboo") {
+          product.category = "Bamboo";
+          await product.save();
+          updatedProducts++;
+          console.log(`Updated product: ${product.name} -> Bamboo category`);
         }
+      }
+    }
+
+    // Step 3: Clean up old individual categories (optional - commented out for safety)
+    console.log("Cleaning up old individual categories...");
+    for (const productName of BAMBOO_PRODUCTS) {
+      const oldCategory = await Category.findOne({ name: productName });
+      if (oldCategory) {
+        await Category.deleteOne({ name: productName });
+        console.log(`Removed old category: ${productName}`);
+      }
+    }
+
+    // Step 4: Validate all products have valid categories
+    console.log("Validating product categories...");
+    const allProducts = await Product.find({});
+    console.log(`Found ${allProducts.length} products to validate`);
+
+    const validCategories = await Category.find({ isActive: true });
+    const validCategoryNames = validCategories.map((cat) => cat.name);
+
+    for (const product of allProducts) {
+      if (product.category && !validCategoryNames.includes(product.category)) {
+        console.log(
+          `Product ${product.name} has invalid category: ${product.category}`
+        );
+        // Set default category for invalid ones
+        product.category = "Shop all";
+        await product.save();
+        console.log(`Fixed product ${product.name} -> Shop all category`);
       }
     }
 
@@ -78,6 +116,7 @@ async function migrateCategories() {
     const activeCategories = await Category.countDocuments({ isActive: true });
     console.log(`Total categories: ${totalCategories}`);
     console.log(`Active categories: ${activeCategories}`);
+    console.log(`Products updated to Bamboo category: ${updatedProducts}`);
   } catch (error) {
     console.error("Migration failed:", error);
   } finally {

@@ -212,7 +212,9 @@ const orderConfirmationTemplate = (orderDetails) => `
                 ${orderDetails.items
                   .map(
                     (item) => `
-                    <li>${item.name} - Quantity: ${item.quantity} - Price: ₹${item.price}</li>
+                    <li>${item.name} (${item.category || "N/A"}) - Quantity: ${
+                      item.quantity
+                    } - Price: ₹${item.price}</li>
                 `
                   )
                   .join("")}
@@ -284,7 +286,9 @@ const adminNotificationTemplate = (orderDetails) => `
                 ${orderDetails.items
                   .map(
                     (item) => `
-                    <li>${item.name} - Quantity: ${item.quantity} - Price: ₹${item.price}</li>
+                    <li>${item.name} (${item.category || "N/A"}) - Quantity: ${
+                      item.quantity
+                    } - Price: ₹${item.price}</li>
                 `
                   )
                   .join("")}

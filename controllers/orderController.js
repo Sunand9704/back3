@@ -59,7 +59,7 @@ exports.createOrder = async (req, res) => {
       deliveryDate,
       deliveryTime,
       paymentStatus,
-      amount,   
+      amount,
       currency = "INR",
       receipt,
     } = req.body;
@@ -119,6 +119,7 @@ PIN: ${order.address.pincode}
         name: item.name,
         quantity: item.quantity,
         price: item.price,
+        category: item.category,
       })),
       totalAmount: order.totalAmount,
       userEmail: populatedOrder.user.email,
@@ -171,7 +172,7 @@ PIN: ${order.address.pincode}
           items: order.items,
           totalAmount: order.totalAmount,
           deliveryDate: order.deliveryDate || null,
-          deliveryTime: order.deliveryTime || null ,
+          deliveryTime: order.deliveryTime || null,
           status: order.status,
         },
         emailStatus: {
